@@ -18,7 +18,13 @@ public class EmmaCheckTask extends Task
   private File metadatafile;
   private File requiredcoverage;
   private File outputfile;
+  private String overallcoverage;
 
+  public void setOverallcoverage(String overallcoverage)
+  {
+    this.overallcoverage = overallcoverage;    
+  }
+  
   public void setCoveragefile(File coveragefile)
   {
     this.coveragefile = coveragefile;
@@ -47,20 +53,27 @@ public class EmmaCheckTask extends Task
       Properties coverageProps = new Properties();
       coverageProps.load(new FileInputStream(requiredcoverage));
       
-      Map<String,Integer> requiredCov = new HashMap<String, Integer>();
+      Map<String,CoverageTarget> requiredCov = new HashMap<String, CoverageTarget>();
       
       for (Entry<Object, Object> entry : coverageProps.entrySet())
       {
         String key = entry.getKey().toString();
         String value = entry.getValue().toString();
         
-        Integer longVal = Integer.valueOf(value);
+        CoverageTarget covTarget = new CoverageTarget(value);
         
-        requiredCov.put(key, longVal);
+        requiredCov.put(key, covTarget);
+      }
+      
+      CoverageTarget requiredOverallCov = null;
+      if (overallcoverage != null)
+      {
+        requiredOverallCov = new CoverageTarget(overallcoverage);
       }
       
       EmmaCheck coverage = new EmmaCheck(coveragefile, 
-                                         metadatafile, 
+                                         metadatafile,
+                                         requiredOverallCov,
                                          requiredCov);
       Map<String,String> failedReqs = coverage.getFailedRequirements();
     

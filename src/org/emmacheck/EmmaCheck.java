@@ -22,17 +22,20 @@ import com.vladium.emma.report.SrcFileItem;
 import com.vladium.util.IProperties;
 
 public class EmmaCheck
-{
-  private final Map<String, Integer> requiredCoverage;
+{  
   private final ICoverageData coverageData;
   private final IMetaData metaData;
+  private final CoverageTarget requiredOverallCoverage;
+  private final Map<String,CoverageTarget> requiredSourceCoverage;
 
   public EmmaCheck(File xiCovFile,
                    File xiMetaFile,
-                   Map<String,Integer> xiRequiredCoverage) 
+                   CoverageTarget xiRequiredOverallCoverage,
+                   Map<String,CoverageTarget> xiRequiredSourceCoverage) 
                    throws IOException
   {    
-    this.requiredCoverage = xiRequiredCoverage;
+    this.requiredOverallCoverage = xiRequiredOverallCoverage;
+    this.requiredSourceCoverage = xiRequiredSourceCoverage;
     
     IMergeable[] covData = DataFactory.load(xiCovFile);
     ICoverageData lCoverageData = null;
@@ -71,7 +74,7 @@ public class EmmaCheck
   
   public Map<String,String> getFailedRequirements()
   {
-    EmmaCheckReport report = new EmmaCheckReport(requiredCoverage);
+    EmmaCheckReport report = new EmmaCheckReport();
     SourcePathCache cache = new SourcePathCache(new File[0], false);
     IProperties props = EMMAProperties.getAppProperties();
     
@@ -80,16 +83,10 @@ public class EmmaCheck
     return report.failedRequirements;
   }
   
-  private static class EmmaCheckReport extends AbstractReportGenerator
+  private class EmmaCheckReport extends AbstractReportGenerator
   {
-    private final Map<String, Integer> _requiredCoverage;
     public final Map<String,String> failedRequirements = new TreeMap<String, String>();
 
-    EmmaCheckReport(Map<String,Integer> xiRequiredCoverage)
-    {
-      this._requiredCoverage = xiRequiredCoverage;
-    }
-    
     @Override
     public String getType()
     {
@@ -112,7 +109,27 @@ public class EmmaCheck
     @Override
     public Object visit(AllItem item, Object ctx)
     {
-      return visit((IItem)item, ctx);
+      Object ret = ctx;
+      if (requiredOverallCoverage != null)
+      {
+        IItemAttribute attr = item.getAttribute(requiredOverallCoverage.mType, 
+                                                m_settings.getUnitsType ());
+
+        boolean fail = !attr.passes(item, 
+                                    requiredOverallCoverage.mTarget);
+
+        if (fail)
+        {
+          StringBuffer buf = new StringBuffer();
+          attr.format(item, buf);
+          failedRequirements.put("Overall Coverage", buf.toString());
+        }
+      }
+      if (requiredSourceCoverage.size() > 0)
+      {
+        ret = visit((IItem)item, ctx);
+      }
+      return ret;
     }
     
     @Override
@@ -125,14 +142,14 @@ public class EmmaCheck
     public Object visit(SrcFileItem item, Object ctx)
     {
       String name = item.getParent().getName() + "." + item.getName();      
-      Integer target = _requiredCoverage.get(name);
+      CoverageTarget target = requiredSourceCoverage.get(name);
       
       if (target != null)
       {
-        final int attrID = IItemAttribute.ATTRIBUTE_BLOCK_COVERAGE_ID;
-        final IItemAttribute attr = item.getAttribute (attrID, m_settings.getUnitsType ());
+        IItemAttribute attr = item.getAttribute (target.mType, 
+                                                 m_settings.getUnitsType ());
         
-        boolean fail = !attr.passes (item, target);
+        boolean fail = !attr.passes (item, target.mTarget);
         
         if (fail)
         {
