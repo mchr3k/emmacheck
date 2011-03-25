@@ -83,6 +83,8 @@ public class EmmaCheck
     return report.failedRequirements;
   }
   
+  public static final String OVERALL_COVERAGE_KEY = "Overall Coverage";
+  
   private class EmmaCheckReport extends AbstractReportGenerator
   {
     public final Map<String,String> failedRequirements = new TreeMap<String, String>();
@@ -122,7 +124,7 @@ public class EmmaCheck
         {
           StringBuffer buf = new StringBuffer();
           attr.format(item, buf);
-          failedRequirements.put("Overall Coverage", buf.toString());
+          failedRequirements.put(OVERALL_COVERAGE_KEY, buf.toString());
         }
       }
       if (requiredSourceCoverage.size() > 0)

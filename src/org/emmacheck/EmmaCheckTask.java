@@ -50,8 +50,26 @@ public class EmmaCheckTask extends Task
   {
     try
     {
+      if (coveragefile == null)
+      {
+        throw new BuildException("Must specify coveragefile");
+      }
+      
+      if (metadatafile == null)
+      {
+        throw new BuildException("Must specify metadatafile");
+      }
+      
+      if (outputfile == null)
+      {
+        throw new BuildException("Must specify outputfile");
+      }
+      
       Properties coverageProps = new Properties();
-      coverageProps.load(new FileInputStream(requiredcoverage));
+      if (requiredcoverage != null)
+      {
+        coverageProps.load(new FileInputStream(requiredcoverage));
+      }
       
       Map<String,CoverageTarget> requiredCov = new HashMap<String, CoverageTarget>();
       
@@ -84,11 +102,23 @@ public class EmmaCheckTask extends Task
       else
       {
         PrintWriter writer = new PrintWriter(outputfile);
+        
+        if (failedReqs.containsKey(EmmaCheck.OVERALL_COVERAGE_KEY))
+        {
+          String failedVal = failedReqs.remove(EmmaCheck.OVERALL_COVERAGE_KEY);
+          writer.println(EmmaCheck.OVERALL_COVERAGE_KEY + " : Required: " + 
+                         requiredOverallCov.mTarget + 
+                         "% : Actual: " + failedVal + 
+                         " " + requiredOverallCov.getTypeString());
+        }
+        
         for (Entry<String,String> entry : failedReqs.entrySet())
         {
+          CoverageTarget target = requiredCov.get(entry.getKey());
           writer.println(entry.getKey() + " : Required: " + 
-                         requiredCov.get(entry.getKey()) + 
-                         " % : actual : " + entry.getValue());
+                         target.mTarget + 
+                         "% : Actual: " + entry.getValue() + 
+                         " " + target.getTypeString());
         }
         writer.flush();
         writer.close();

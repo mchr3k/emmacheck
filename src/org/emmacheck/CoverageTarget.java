@@ -41,4 +41,24 @@ public class CoverageTarget
       throw new IllegalArgumentException(xiTarget);
     }
   }
+
+  public String getTypeString()
+  {
+    if (mType == IItemAttribute.ATTRIBUTE_LINE_COVERAGE_ID)
+    {
+      return "(lines)";
+    }
+    else if (mType == IItemAttribute.ATTRIBUTE_BLOCK_COVERAGE_ID)
+    {
+      return "(blocks)";
+    }
+    else if (mType == IItemAttribute.ATTRIBUTE_METHOD_COVERAGE_ID)
+    {
+      return "(methods)";
+    }
+    else
+    {
+      return "(unknown)";
+    }
+  }
 }
