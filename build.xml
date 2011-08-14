@@ -1,4 +1,4 @@
-<project name="InTrace" basedir="." default="help">
+<project name="EmmaCheck" basedir="." default="help">
 
   <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask"
            classpath="./lib/jarjar-1.0.jar"/>
