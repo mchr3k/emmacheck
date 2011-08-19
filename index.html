@@ -1,77 +1,216 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='utf-8'>
+---
+layout: default
+title: EmmaCheck - Home
+---
+<h2>Home</h2>
 
-  <title>mchr3k/emmacheck @ GitHub</title>
+<p>EmmaCheck is an ant task which enforces particular Java code coverage levels.
 
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #669ef2;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #000000;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #99610d; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #99610d; }
-    h3 { text-align: center; color: #99610d; }
-    a { color: #99610d; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
-</head>
+<p>Download <a href="http://github.com/mchr3k/emmacheck/raw/master/binaries/emmacheck-0.2.jar">emmacheck-0.2.jar</a>
 
-<body>
-  <a href="http://github.com/mchr3k/emmacheck"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+<h3>The Problem</h3>
 
-  <div id="container">
+<p><a href="http://emma.sourceforge.net/">EMMA</a> is the Java code coverage engine used by the popular 
+<a href="http://www.eclemma.org/">EclEmma</a> Eclipse plugin. With a few extra lines in 
+your <a href="http://ant.apache.org/">ANT</a> build.xml file you can generate a code coverage report for your Java project.
 
-    <div class="download">
-      <a href="http://github.com/mchr3k/emmacheck/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/mchr3k/emmacheck/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
+<p>But what then? Will you ever look at the coverage report in the future?
 
-    <h1><a href="http://github.com/mchr3k/emmacheck">emmacheck</a>
-      <span class="small">by <a href="http://github.com/mchr3k">mchr3k</a></span></h1>
+<h3>The Solution</h3>
 
-    <div class="description">
-      EMMA Code Coverage Check Ant Task
-    </div>
+<p>Measuring code coverage is most useful if you can actually enforce a particular level of 
+coverage. EmmaCheck automates the checking of an EMMA code coverage report.
 
-    <h2>Authors</h2>
-<p>Martin (mchr3k@gmail.com)<br/>MCHR3k (mchr3k@googlemail.com)<br/><br/>      </p>
-<h2>Contact</h2>
-<p> (mchr3k@googlemail.com)<br/>      </p>
+<p>There are two common use cases.
+
+<h4>Overall Code Coverage</h4>
+
+<p>First you need to download emmacheck-0.2.jar and place it within your java project. Second, you need to add the following 
+lines near the top of your build.xml file to tell ANT about the emmacheck task.
+
+<pre class="prettyprint lang-xml">
+&lt;taskdef name="emmacheck" classname="org.emmacheck.EmmaCheckTask"
+                          classpath="./lib/ant/emmacheck-0.2.jar"/&gt;</pre>
+
+<p>The following lines of XML will check that 100% of lines were covered.
+
+<pre class="prettyprint lang-xml">
+&lt;emmacheck coveragefile="reports/coverage/coverage.emma"
+		   metadatafile="reports/coverage/metadata.emma"
+		   outputfile="reports/coverage/requiredcoverage.out"
+		   overallcoverage="L100" /&gt;</pre>
+
+<p>The overallcoverage parameter accepts 4 formats.
+
+<ul>
+<li>100 - 100% of lines were covered
+<li>L100 - 100% of lines were covered
+<li>M100 - 100% of methods were covered
+<li>B100 - 100% of basic blocks were covered
+</ul>
+
+<h4>Source Level Code Coverage</h4>
+
+<p>Getting 100% overall code coverage can be really difficult. However, it 
+is much easier to get 100% coverage of particular files and this can also be enforced by emmacheck.
+
+<p>The following lines of XML will check that the coverage set out in requiredcoverage.properties is met.
+
+<pre class="prettyprint lang-xml">
+&lt;emmacheck coveragefile="reports/coverage/coverage.emma"
+		   metadatafile="reports/coverage/metadata.emma"
+		   outputfile="reports/coverage/requiredcoverage.out"
+		   requiredcoverage="config/requiredcoverage.properties" /&gt;</pre>
+
+<p>requiredcoverage.properties should look something like this.
+
+<pre>
+org.example.Source.java               = L100
+org.example.subpackage.SubSource.java = B95</pre>
+
+<h3>Complete Example</h3>
+
+<p>This section includes a complete example build.xml file showing how to do all of the following.
+
+<ul>
+<li>Compile your code
+<li>Instrument the compiled code
+<li>Compile your tests
+<li>Run your tests against the instrumented code
+<li>Generate an EMMA report
+<li>Run the EmmaCheck task to check the level of code coverage
+</ul>
+	
+<p>Here is the ANT build.xml file.
+
+<pre class="prettyprint lang-xml">
+&lt;project name="Example" basedir="." default="help"&gt;
+
+  &lt;path id="emma.lib" &gt;
+	&lt;pathelement location="./lib/ant/emma.jar" /&gt;
+	&lt;pathelement location="./lib/ant/emma_ant.jar" /&gt;
+  &lt;/path&gt;
+  &lt;path id="project.classpath" &gt;
+	&lt;fileset dir="./lib" includes="*.jar" /&gt;
+  &lt;/path&gt;
+
+  &lt;taskdef resource="emma_ant.properties" classpathref="emma.lib" /&gt;
+  &lt;taskdef name="emmacheck" classname="org.emmacheck.EmmaCheckTask"
+		   classpath="./lib/ant/emmacheck-0.2.jar"/&gt;
+
+  &lt;target name="help"&gt;
+	&lt;java classname="org.apache.tools.ant.Main"&gt;
+	  &lt;arg value="-projecthelp" /&gt;
+	&lt;/java&gt;
+  &lt;/target&gt;
+
+  &lt;target name="clean" description="Clean built files"&gt;
+	&lt;delete dir="./build" /&gt;
+	&lt;delete dir="./reports" /&gt;
+  &lt;/target&gt;
+
+  &lt;target name="build" description="Build classes"&gt;
+
+	&lt;mkdir dir="./build" /&gt;
+	&lt;mkdir dir="./build/classes" /&gt;
+
+	&lt;!-- Compile project source code --&gt;
+	&lt;javac classpathref="project.classpath"
+		   destdir="./build/classes"
+		   debug="true"
+		   source="1.6"
+		   target="1.6"
+		   includeAntRuntime="false"&gt;
+	  &lt;src path="./src" /&gt;
+	&lt;/javac&gt;
+
+  &lt;/target&gt;
+
+  &lt;target name="test" description="Run UTs and generate code coverage report" depends="build"&gt;
+	&lt;property name="emma.enabled" value="true" /&gt;
+
+	&lt;mkdir dir="./reports" /&gt;
+	&lt;mkdir dir="./reports/test" /&gt;
+	&lt;mkdir dir="./reports/test/raw" /&gt;
+	&lt;mkdir dir="./reports/coverage" /&gt;
+	&lt;mkdir dir="./reports/coverage/metadata" /&gt;
+
+	&lt;mkdir dir="./build/test" /&gt;
+	&lt;mkdir dir="./build/classes_instr" /&gt;
+
+	&lt;!-- Compile test source code --&gt;
+	&lt;javac destdir="./build/test" debug="true" source="1.6" target="1.6" includeAntRuntime="false"&gt;
+	  &lt;src path="./testsrc"/&gt;
+	  &lt;classpath&gt;
+		&lt;pathelement path="./build/classes" /&gt;
+		&lt;path refid="project.classpath" /&gt;
+		&lt;path refid="test.classpath" /&gt;
+	  &lt;/classpath&gt;
+	&lt;/javac&gt;
+
+	&lt;!-- Copy base class files --&gt;
+	&lt;copy todir="./build/classes_instr"&gt;
+	  &lt;fileset dir="./build/classes" /&gt;
+	&lt;/copy&gt;
+
+	&lt;!-- Instrument class files --&gt;
+	&lt;emma enabled="${emma.enabled}" &gt;
+	  &lt;instr instrpath="./build/classes_instr"
+			 metadatafile="./reports/coverage/metadata/metadata.emma"
+			 merge="true"
+			 mode="overwrite"
+	  /&gt;
+	&lt;/emma&gt;
+
+	&lt;!-- Run tests using the instrumented class files --&gt;
+	&lt;junit printsummary="yes" haltonfailure="yes"&gt;
+	  &lt;classpath&gt;
+		&lt;pathelement location="./build/classes_instr"/&gt;
+		&lt;pathelement location="./build/test"/&gt;
+		&lt;path refid="emma.lib" /&gt;
+		&lt;path refid="project.classpath" /&gt;
+	  &lt;/classpath&gt;
+	  &lt;jvmarg value="-Demma.coverage.out.file=./reports/coverage/metadata/coverage.emma" /&gt;
+	  &lt;jvmarg value="-Demma.coverage.out.merge=true" /&gt;
+
+	  &lt;formatter type="xml"/&gt;
+	  &lt;formatter type="plain"/&gt;
+
+	  &lt;batchtest fork="yes" todir="./reports/test/raw"&gt;
+	  &lt;fileset dir="./testsrc"&gt;
+		&lt;include name="**/*TestCase.java"/&gt;
+	  &lt;/fileset&gt;
+	  &lt;/batchtest&gt;
+	&lt;/junit&gt;
+
+	&lt;!-- Generate a JUnit report --&gt;
+	&lt;junitreport todir="./reports/test"&gt;
+	  &lt;fileset dir="./reports/test/raw"&gt;
+		&lt;include name="TEST-*.xml"/&gt;
+	  &lt;/fileset&gt;
+	  &lt;report format="frames" todir="./reports/test/"/&gt;
+	&lt;/junitreport&gt;
+
+	&lt;!-- Generate EMMA reports --&gt;
+	&lt;emma enabled="${emma.enabled}" &gt;
+	  &lt;report sourcepath="./src" &gt;
+		&lt;fileset dir="./reports/coverage/metadata/" &gt;
+		  &lt;include name="*.emma" /&gt;
+		&lt;/fileset&gt;
+
+		&lt;txt outfile="./reports/coverage/coverage.txt" /&gt;
+		&lt;html outfile="./reports/coverage/coverage.html" depth="class"/&gt;
+	  &lt;/report&gt;
+	&lt;/emma&gt;
+
+	&lt;!-- Check the EMMA code coverage against requiredcoverage.properties --&gt;
+	&lt;emmacheck coveragefile="./reports/coverage/metadata/coverage.emma"
+			   metadatafile="./reports/coverage/metadata/metadata.emma"
+			   requiredcoverage="./config/requiredcoverage.properties"
+			   output="./reports/coverage/requiredcoverage.out" /&gt;
+  &lt;/target&gt;  
+
+&lt;/project&gt;</pre>
 
 
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/mchr3k/emmacheck/zipball/master">zip</a> or
-      <a href="http://github.com/mchr3k/emmacheck/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/mchr3k/emmacheck</pre>
-    </p>
 
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/mchr3k/emmacheck">mchr3k/emmacheck</a>
-    </div>
-
-  </div>
-
-  
-</body>
-</html>
