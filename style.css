@@ -63,13 +63,13 @@ body
 	right:185px;
 }
 
-#title a,
 .col1 a 
 {
 	color:#000000;
 	text-decoration:underline;
 }
 
+#title a,
 .col2 a 
 {
 	color:#000000;
